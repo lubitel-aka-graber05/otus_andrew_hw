@@ -1,4 +1,4 @@
-module github.com/lubitel-aka-graber05/hw01_hello_otus
+module github.com/lubitel-aka-graber05/otus_andrew_hw/hw01_hello_otus
 
 go 1.16
 
