@@ -26,3 +26,5 @@ ehthumbs.db
 Thumbs.db
 .vscode/
 *.bak
+.vendor/
+hw01_hello_otus/vendor/
