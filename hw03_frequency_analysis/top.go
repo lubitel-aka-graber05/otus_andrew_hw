@@ -10,9 +10,7 @@ import (
 var editString = regexp.MustCompile(`(?m)[0-9]`)
 
 type WorkingWithWords struct {
-	resultSlice []string
-	tempSl      []string
-
+	tempSl []string
 }
 
 func (w *WorkingWithWords) AppendCountSort(s string) []string {
@@ -41,8 +39,6 @@ func (w *WorkingWithWords) AppendCountSort(s string) []string {
 	sort.Strings(w.tempSl[5:])
 	return w.tempSl
 }
-
-
 
 func Top10(s string) []string {
 	var hardWork WorkingWithWords
