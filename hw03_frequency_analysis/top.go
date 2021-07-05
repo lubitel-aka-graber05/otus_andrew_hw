@@ -10,7 +10,23 @@ import (
 var editString = regexp.MustCompile(`(?m)[0-9]`)
 
 type WorkingWithWords struct {
+	countComma int
+	countDot int
+	countedCommaAndDot []int
 	tempSl []string
+}
+
+func (w *WorkingWithWords) CountCommaAndDot(s string) []int {
+	for _, s1 := range s {
+		if rune(s1) == ',' {
+			w.countComma++
+		}
+		if rune(s1) == '.' {
+			w.countDot++
+		}
+	}
+	w.countedCommaAndDot = append(w.countedCommaAndDot, w.countComma, w.countDot)
+	return w.countedCommaAndDot
 }
 
 func (w *WorkingWithWords) AppendCountSort(s string) []string {
@@ -39,8 +55,13 @@ func (w *WorkingWithWords) AppendCountSort(s string) []string {
 	sort.Strings(w.tempSl[5:])
 	return w.tempSl
 }
+var hardWork WorkingWithWords
+
+func Count(s string) []int {
+	return hardWork.CountCommaAndDot(s)
+}
 
 func Top10(s string) []string {
-	var hardWork WorkingWithWords
+
 	return hardWork.AppendCountSort(s)
 }

@@ -44,6 +44,12 @@ var text = `Как видите, он  спускается  по  лестни�
 		В этот вечер...`
 
 func TestTop10(t *testing.T) {
+
+	t.Run("count comma and dot", func(t *testing.T) {
+		expected := []int{33, 20}
+		require.Equal(t, expected, Count(text))
+	})
+
 	t.Run("no words in empty string", func(t *testing.T) {
 		require.Len(t, Top10(""), 0)
 	})
