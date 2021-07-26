@@ -13,19 +13,19 @@ func (lc *lruCache) Set(key Key, value interface{}) bool {
 		lc.queue.MoveToFront(node)
 		node.Value.(*ListItem).Value = cacheItem{key: string(key), value: value}
 		return true
-	} else {
-		if lc.queue.Len() == lc.capacity {
-			lc.Clear()
-		}
-		node := &ListItem{
-			Value: cacheItem{
-				key:   string(key),
-				value: value,
-			},
-		}
-		ptr := lc.queue.PushFront(node)
-		lc.items[key] = ptr
 	}
+	if lc.queue.Len() == lc.capacity {
+		lc.Clear()
+	}
+	node := &ListItem{
+		Value: cacheItem{
+			key:   string(key),
+			value: value,
+		},
+	}
+	ptr := lc.queue.PushFront(node)
+	lc.items[key] = ptr
+
 	return false
 }
 
