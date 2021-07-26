@@ -8,54 +8,40 @@ type Cache interface {
 	Clear()
 }
 
-/*func (lc *lruCache) Set(key Key, value interface{}) bool {
-	_, ok := lc.items[key]
-	if !ok {
-		if len(lc.items) == lc.capacity {
-			e := lc.queue.Back()
-			lc.queue.Remove(e)
-			keyName := e.Value.(cacheItem).key
-			delete(lc.items, Key(keyName))
-		}else {
-			item := cacheItem{key: string(key), value: value}
-			lc.queue.PushFront(item)
-			lc.items[key] = value
-			return false
-		}
-	}
-	return true
-}*/
-
 func (lc *lruCache) Set(key Key, value interface{}) bool {
-	// ci := &cacheItem{key: string(key), value: value}
-
-	if el, ok := lc.items[key]; ok {
-		lc.queue.MoveToFront(el)
-		el.Value = value
+	if node, ok := lc.items[key]; ok {
+		lc.queue.MoveToFront(node)
+		node.Value.(*ListItem).Value = cacheItem{key: string(key), value: value}
 		return true
+	}else {
+		if lc.queue.Len() == lc.capacity {
+			lc.Clear()
+		}
+		node := &ListItem{
+			Value: cacheItem{
+				key: string(key),
+				value: value,
+			},
+		}
+		ptr := lc.queue.PushFront(node)
+		lc.items[key] = ptr
 	}
-	if len(lc.items) == lc.capacity {
-		lc.Clear()
-	}
-
-	el := lc.queue.PushFront(value)
-	lc.items[key] = el
-
 	return false
 }
 
 func (lc *lruCache) Clear() {
+	k := lc.queue.Back().Value.(*ListItem).Value.(cacheItem).key
+	delete(lc.items, Key(k))
 	lc.queue.Remove(lc.queue.Back())
-	delete(lc.items, "a")
 }
 
 func (lc *lruCache) Get(key Key) (interface{}, bool) {
-	el, ok := lc.items[key]
-	if !ok {
-		return nil, false
+	if node, ok := lc.items[key]; ok {
+		val := node.Value.(*ListItem).Value.(cacheItem).value
+		lc.queue.MoveToFront(node)
+		return val, true
 	}
-	lc.queue.MoveToFront(el)
-	return el.Value, true
+	return nil, false
 }
 
 type lruCache struct {
@@ -65,10 +51,10 @@ type lruCache struct {
 	items    map[Key]*ListItem
 }
 
-/*type cacheItem struct {
+type cacheItem struct {
 	key   string
 	value interface{}
-}*/
+}
 
 func NewCache(capacity int) Cache {
 	return &lruCache{

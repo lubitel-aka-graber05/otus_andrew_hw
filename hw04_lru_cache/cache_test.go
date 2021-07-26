@@ -58,6 +58,20 @@ func TestCache(t *testing.T) {
 		_, ok := c.Get("a")
 		require.False(t, ok)
 	})
+
+	t.Run("purge logic2", func(t *testing.T) {
+		c := NewCache(3)
+
+		_ = c.Set("a", 1)
+		_ = c.Set("b", 2)
+		_ = c.Set("c", 3)
+		_, _ = c.Get("a")
+		_, _ = c.Get("b")
+		_ = c.Set("d", 4)
+		val, ok := c.Get("c")
+		require.False(t, ok)
+		require.Equal(t, nil, val)
+	})
 }
 
 func TestCacheMultithreading(t *testing.T) {
