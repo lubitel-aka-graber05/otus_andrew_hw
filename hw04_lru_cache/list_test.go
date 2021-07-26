@@ -22,10 +22,18 @@ func TestList(t *testing.T) {
 		l.PushBack(20)  // [10, 20]
 		l.PushBack(30)  // [10, 20, 30]
 		require.Equal(t, 3, l.Len())
+		require.Equal(t, 10, l.Front().Value)
+		require.Equal(t, 30, l.Back().Value)
 
 		middle := l.Front().Next // 20
 		l.Remove(middle)         // [10, 30]
 		require.Equal(t, 2, l.Len())
+
+		elems2 := make([]int, 0, l.Len())
+		for i := l.Front(); i != nil; i = i.Next {
+			elems2 = append(elems2, i.Value.(int))
+		}
+		require.Equal(t, []int{10, 30}, elems2)
 
 		for i, v := range [...]int{40, 50, 60, 70, 80} {
 			if i%2 == 0 {
