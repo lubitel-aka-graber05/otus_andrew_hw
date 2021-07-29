@@ -76,7 +76,7 @@ func TestCache(t *testing.T) {
 		require.Equal(t, nil, val)
 	})
 
-	t.Run("test Clear()", func(t *testing.T) {
+	t.Run("test method Clear()", func(t *testing.T) {
 		c := NewCache(2)
 
 		_ = c.Set("a", 1)
