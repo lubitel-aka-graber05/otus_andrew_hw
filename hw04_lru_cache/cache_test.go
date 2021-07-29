@@ -55,8 +55,9 @@ func TestCache(t *testing.T) {
 		_ = c.Set("a", 1)
 		_ = c.Set("b", 2)
 		_ = c.Set("c", 3)
-		_, ok := c.Get("a")
+		val, ok := c.Get("a")
 		require.False(t, ok)
+		require.Equal(t, nil, val)
 	})
 
 	t.Run("purge logic2", func(t *testing.T) {

@@ -28,16 +28,16 @@ func (l *list) Len() int {
 }
 
 func (l *list) Front() *ListItem {
-	if l.Len() == 0 {
+	/*if l.Len() == 0 {
 		return nil
-	}
+	}*/
 	return l.front
 }
 
 func (l *list) Back() *ListItem {
-	if l.Len() == 0 {
+	/*if l.Len() == 0 {
 		return nil
-	}
+	}*/
 	return l.back
 }
 
@@ -91,11 +91,15 @@ func (l *list) Remove(i *ListItem) {
 
 func (l *list) MoveToFront(i *ListItem) {
 	if i == l.front {
-		l.front = i
+		// l.front = i
+
 	}
 	if i == l.back {
 		l.front = l.PushFront(i.Value)
 		l.Remove(i)
+	}
+	if i == l.front.Next {
+		l.front = l.PushFront(i.Value)
 	}
 }
 
