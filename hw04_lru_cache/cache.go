@@ -15,7 +15,7 @@ func (lc *lruCache) Set(key Key, value interface{}) bool {
 		return true
 	}
 	if lc.queue.Len() == lc.capacity {
-		lc.Clear()
+		lc.delLastElement()
 	}
 	node := &ListItem{
 		Value: cacheItem{
@@ -29,10 +29,16 @@ func (lc *lruCache) Set(key Key, value interface{}) bool {
 	return false
 }
 
-func (lc *lruCache) Clear() {
+func (lc *lruCache) delLastElement() {
 	k := lc.queue.Back().Value.(*ListItem).Value.(cacheItem).key
 	delete(lc.items, Key(k))
 	lc.queue.Remove(lc.queue.Back())
+}
+
+func (lc *lruCache) Clear() {
+	lc.capacity = 0
+	lc.queue = nil
+	lc.items = nil
 }
 
 func (lc *lruCache) Get(key Key) (interface{}, bool) {
