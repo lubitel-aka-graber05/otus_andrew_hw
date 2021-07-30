@@ -50,7 +50,60 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+		c := NewCache(2)
+
+		_ = c.Set("a", 1)
+		_ = c.Set("b", 2)
+		_ = c.Set("c", 3)
+		val, ok := c.Get("a")
+		require.False(t, ok)
+		require.Equal(t, nil, val)
+	})
+
+	t.Run("purge logic2", func(t *testing.T) {
+		c := NewCache(3)
+
+		_ = c.Set("a", 1)
+		_ = c.Set("b", 2)
+		_ = c.Set("c", 3)
+
+		_, _ = c.Get("a")
+		_, _ = c.Get("b")
+
+		_ = c.Set("d", 4)
+		val, ok := c.Get("c")
+		require.False(t, ok)
+		require.Equal(t, nil, val)
+	})
+
+	t.Run("test method Clear()", func(t *testing.T) {
+		c := NewCache(2)
+
+		_ = c.Set("a", 1)
+		_ = c.Set("b", 2)
+		c.Clear()
+		val, ok := c.Get("a")
+		require.False(t, ok)
+		require.Equal(t, nil, val)
+
+		val, ok = c.Get("b")
+		require.False(t, ok)
+		require.Equal(t, nil, val)
+
+		_ = c.Set("a", 1)
+		val, ok = c.Get("a")
+		require.True(t, ok)
+		require.Equal(t, 1, val)
+
+		_ = c.Set("b", 2)
+		_ = c.Set("c", 3)
+		val, ok = c.Get("b")
+		require.True(t, ok)
+		require.Equal(t, 2, val)
+
+		val, ok = c.Get("a")
+		require.False(t, ok)
+		require.Equal(t, nil, val)
 	})
 }
 
