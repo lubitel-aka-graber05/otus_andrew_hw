@@ -28,16 +28,10 @@ func (l *list) Len() int {
 }
 
 func (l *list) Front() *ListItem {
-	/*if l.Len() == 0 {
-		return nil
-	}*/
 	return l.front
 }
 
 func (l *list) Back() *ListItem {
-	/*if l.Len() == 0 {
-		return nil
-	}*/
 	return l.back
 }
 
@@ -83,11 +77,10 @@ func (l *list) Remove(i *ListItem) {
 			l.back = l.back.Prev
 			l.back.Next = nil
 		}
-		/*case l.front.Next:
-		l.front.Next = l.back*/
+	default:
+		i.Prev.Next = i.Next
+		i.Next.Prev = i.Prev
 	}
-	i.Prev.Next = i.Next
-
 	l.len--
 }
 

@@ -85,7 +85,23 @@ func TestCache(t *testing.T) {
 		val, ok := c.Get("a")
 		require.False(t, ok)
 		require.Equal(t, nil, val)
+
 		val, ok = c.Get("b")
+		require.False(t, ok)
+		require.Equal(t, nil, val)
+
+		_ = c.Set("a", 1)
+		val, ok = c.Get("a")
+		require.True(t, ok)
+		require.Equal(t, 1, val)
+
+		_ = c.Set("b", 2)
+		_ = c.Set("c", 3)
+		val, ok = c.Get("b")
+		require.True(t, ok)
+		require.Equal(t, 2, val)
+
+		val, ok = c.Get("a")
 		require.False(t, ok)
 		require.Equal(t, nil, val)
 	})

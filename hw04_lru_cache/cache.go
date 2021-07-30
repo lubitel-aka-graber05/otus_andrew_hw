@@ -36,9 +36,11 @@ func (lc *lruCache) delLastElement() {
 }
 
 func (lc *lruCache) Clear() {
-	lc.capacity = 0
+	//lc.capacity = 0
 	lc.queue = nil
+	lc.queue = NewList()
 	lc.items = nil
+	lc.items = make(map[Key]*ListItem, lc.capacity)
 }
 
 func (lc *lruCache) Get(key Key) (interface{}, bool) {
