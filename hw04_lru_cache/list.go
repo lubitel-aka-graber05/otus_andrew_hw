@@ -86,7 +86,6 @@ func (l *list) Remove(i *ListItem) {
 
 func (l *list) MoveToFront(i *ListItem) {
 	if i == l.front {
-		// l.front = i
 		return
 	}
 	if i == l.back {

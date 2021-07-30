@@ -36,7 +36,6 @@ func (lc *lruCache) delLastElement() {
 }
 
 func (lc *lruCache) Clear() {
-	//lc.capacity = 0
 	lc.queue = nil
 	lc.queue = NewList()
 	lc.items = nil
