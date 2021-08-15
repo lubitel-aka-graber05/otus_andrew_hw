@@ -20,38 +20,26 @@ func Run(tasks []Task, n, m int) error {
 		m = len(tasks)
 	}
 
-	getTaskFromSlice := func() {
+	for i := 0; i < n; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for _, task := range tasks {
-				ch <- task
-				if atomic.LoadInt32(&errCount) >= int32(m) {
-					break
+			for task := range ch {
+				if task() != nil {
+					atomic.AddInt32(&errCount, 1)
 				}
 			}
-			close(ch)
 		}()
 	}
 
-	doingTask := func() {
-		for i := 0; i < n; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for task := range ch {
-					if task() != nil {
-						atomic.AddInt32(&errCount, 1)
-					}
-				}
-			}()
+	for _, task := range tasks {
+		if atomic.LoadInt32(&errCount) == int32(m) {
+			break
 		}
+		ch <- task
 	}
-
-	getTaskFromSlice()
-	doingTask()
+	close(ch)
 	wg.Wait()
-
 	if errCount >= int32(m) {
 		return ErrErrorsLimitExceeded
 	}
