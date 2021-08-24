@@ -20,14 +20,4 @@ func TestCopy(t *testing.T) {
 		err := Copy("testdata/input.txt", "/tmp/output.txt", 7000, 0)
 		require.ErrorIs(t, err, ErrOffsetExceedsFileSize, "Offset is larger than the file size")
 	})
-
-	t.Run("offset = 0 & limit = 0", func(t *testing.T) {
-		err := Copy("input.txt", "/tmp/output.txt", 0, 0)
-		require.NoError(t, err)
-	})
-
-	t.Run("offset = 1 & limit = 10", func(t *testing.T) {
-		err := Copy("input.txt", "/tmp/output.txt", 1, 10)
-		require.NoError(t, err)
-	})
 }
