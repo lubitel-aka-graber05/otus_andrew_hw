@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
-	"github.com/cheggaaa/pb/v3"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -53,20 +54,20 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		buf := make([]byte, editFile.Size())
 		bar := pb.ProgressBarTemplate(tmpl).Start64(editFile.Size())
 		defer bar.Finish()
-		if _, err := bar.NewProxyReader(editFile).Read(buf); err != nil && err != io.EOF {
+		if _, err := bar.NewProxyReader(editFile).Read(buf); err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
-		if err := ioutil.WriteFile(to, buf, 0644); err != nil {
+		if err := ioutil.WriteFile(toPath, buf, 0644); err != nil {
 			return err
 		}
 	case offset == 0 && limit == 0:
 		bar := pb.ProgressBarTemplate(tmpl).Start64(fileStat.Size())
 		defer bar.Finish()
 		buf := make([]byte, fileStat.Size())
-		if _, err := bar.NewProxyReader(file).Read(buf); err != nil && err != io.EOF {
+		if _, err := bar.NewProxyReader(file).Read(buf); err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
-		if err = ioutil.WriteFile(to, buf, 0644); err != nil {
+		if err := ioutil.WriteFile(toPath, buf, 0644); err != nil {
 			return err
 		}
 	}
