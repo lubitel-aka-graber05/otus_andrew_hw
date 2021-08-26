@@ -57,7 +57,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		if _, err := bar.NewProxyReader(editFile).Read(buf); err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
-		if err := ioutil.WriteFile(toPath, buf, 0644); err != nil {
+		if err := ioutil.WriteFile(toPath, buf, 0600); err != nil {
 			return err
 		}
 	case offset == 0 && limit == 0:
@@ -67,7 +67,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		if _, err := bar.NewProxyReader(file).Read(buf); err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
-		if err := ioutil.WriteFile(toPath, buf, 0644); err != nil {
+		if err := ioutil.WriteFile(toPath, buf, 0600); err != nil {
 			return err
 		}
 	}
