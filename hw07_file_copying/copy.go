@@ -2,12 +2,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"github.com/cheggaaa/pb/v3"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
-
-	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -27,13 +27,13 @@ func closeFile(file *os.File) {
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	file, err := os.Open(fromPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error from Open: %v\n", err)
 	}
 	defer closeFile(file)
 
 	fileStat, err := file.Stat()
 	if err != nil {
-		return err
+		return fmt.Errorf("Error from Stat: %v\n", err)
 	}
 	if !fileStat.Mode().IsRegular() {
 		return ErrUnsupportedFile
@@ -54,21 +54,21 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		buf := make([]byte, editFile.Size())
 		bar := pb.ProgressBarTemplate(tmpl).Start64(editFile.Size())
 		defer bar.Finish()
-		if _, err := bar.NewProxyReader(editFile).Read(buf); err != nil && !errors.Is(err, io.EOF) {
-			return err
+		if _, err = bar.NewProxyReader(editFile).Read(buf); err != nil && !errors.Is(err, io.EOF) {
+			return fmt.Errorf("Error from Read: %v\n", err)
 		}
-		if err := ioutil.WriteFile(toPath, buf, 0600); err != nil {
-			return err
+		if err = ioutil.WriteFile(toPath, buf, 0600); err != nil {
+			return fmt.Errorf("Error from WriteFile: %v\n", err)
 		}
-	case offset == 0 && limit == 0:
+	default:
 		bar := pb.ProgressBarTemplate(tmpl).Start64(fileStat.Size())
 		defer bar.Finish()
 		buf := make([]byte, fileStat.Size())
-		if _, err := bar.NewProxyReader(file).Read(buf); err != nil && !errors.Is(err, io.EOF) {
-			return err
+		if _, err = bar.NewProxyReader(file).Read(buf); err != nil && !errors.Is(err, io.EOF) {
+			return fmt.Errorf("Error from bar.Read: %v\n", err)
 		}
-		if err := ioutil.WriteFile(toPath, buf, 0600); err != nil {
-			return err
+		if err = ioutil.WriteFile(toPath, buf, 0600); err != nil {
+			return fmt.Errorf("Error from WriteFile: %v\n", err)
 		}
 	}
 
