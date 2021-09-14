@@ -44,32 +44,30 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if offset < 0 {
 		return ErrIncorrectOffsetValue
 	}
-	if limit > fileStat.Size()-offset {
+	if limit == 0 || limit > fileStat.Size()-offset {
 		limit = fileStat.Size() - offset
 	}
 
-	switch {
-	case offset != 0 || limit != 0:
-		editFile := io.NewSectionReader(file, offset, limit)
-		buf := make([]byte, editFile.Size())
-		bar := pb.ProgressBarTemplate(tmpl).Start64(editFile.Size())
-		defer bar.Finish()
-		if _, err = bar.NewProxyReader(editFile).Read(buf); err != nil && !errors.Is(err, io.EOF) {
-			return fmt.Errorf("Error from Read: %v\n", err)
-		}
-		if err = ioutil.WriteFile(toPath, buf, 0600); err != nil {
-			return fmt.Errorf("Error from WriteFile: %v\n", err)
-		}
-	default:
-		bar := pb.ProgressBarTemplate(tmpl).Start64(fileStat.Size())
-		defer bar.Finish()
-		buf := make([]byte, fileStat.Size())
-		if _, err = bar.NewProxyReader(file).Read(buf); err != nil && !errors.Is(err, io.EOF) {
-			return fmt.Errorf("Error from bar.Read: %v\n", err)
-		}
-		if err = ioutil.WriteFile(toPath, buf, 0600); err != nil {
-			return fmt.Errorf("Error from WriteFile: %v\n", err)
-		}
+	var r io.Reader = file
+	var buf []byte
+	var bar *pb.ProgressBar
+
+	if offset != 0 || limit != 0 {
+		r = io.NewSectionReader(file, offset, limit)
+		buf = make([]byte, io.NewSectionReader(file, offset, limit).Size())
+		bar = pb.ProgressBarTemplate(tmpl).Start64(io.NewSectionReader(file, offset, limit).Size())
+	} else {
+		buf = make([]byte, fileStat.Size())
+		bar = pb.ProgressBarTemplate(tmpl).Start64(fileStat.Size())
+	}
+
+	defer bar.Finish()
+
+	if _, err = bar.NewProxyReader(r).Read(buf); err != nil && !errors.Is(err, io.EOF) {
+		return fmt.Errorf("Error from Read: %v\n", err)
+	}
+	if err = ioutil.WriteFile(toPath, buf, 0600); err != nil {
+		return fmt.Errorf("Error from WriteFile method: %v\n", err)
 	}
 
 	return nil
