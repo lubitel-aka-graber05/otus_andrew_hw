@@ -3,11 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/cheggaaa/pb/v3"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -27,13 +28,13 @@ func closeFile(file *os.File) {
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	file, err := os.Open(fromPath)
 	if err != nil {
-		return fmt.Errorf("Error from Open: %v\n", err)
+		return fmt.Errorf("error from Open: %w", err)
 	}
 	defer closeFile(file)
 
 	fileStat, err := file.Stat()
 	if err != nil {
-		return fmt.Errorf("Error from Stat: %v\n", err)
+		return fmt.Errorf("error from Stat: %w", err)
 	}
 	if !fileStat.Mode().IsRegular() {
 		return ErrUnsupportedFile
@@ -64,10 +65,10 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	defer bar.Finish()
 
 	if _, err = bar.NewProxyReader(r).Read(buf); err != nil && !errors.Is(err, io.EOF) {
-		return fmt.Errorf("Error from Read: %v\n", err)
+		return fmt.Errorf("error from Read: %w", err)
 	}
 	if err = ioutil.WriteFile(toPath, buf, 0600); err != nil {
-		return fmt.Errorf("Error from WriteFile method: %v\n", err)
+		return fmt.Errorf("error from WriteFile method: %w", err)
 	}
 
 	return nil
