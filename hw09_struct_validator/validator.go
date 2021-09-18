@@ -19,10 +19,10 @@ func (v ValidationErrors) Error() string {
 	var sb strings.Builder
 	for i := 0; i < len(v); i++ {
 		if i == len(v)-1 {
-			fmt.Fprint(&sb, v[i])
+			_, _ = fmt.Fprint(&sb, v[i])
 			continue
 		}
-		fmt.Fprintln(&sb, v[i])
+		_, _ = fmt.Fprintln(&sb, v[i])
 	}
 	return sb.String()
 }
@@ -54,6 +54,12 @@ func Validate(v interface{}) error {
 				err.Err = errors.New("is not validated")
 			}
 			if body.Len() > l {
+				err.Field = tp.Field(i).Name
+				err.Err = errors.New("is not validated")
+				containErr = append(containErr, err)
+			}
+		case "Name":
+			if val.Field(i).Kind() != reflect.String {
 				err.Field = tp.Field(i).Name
 				err.Err = errors.New("is not validated")
 				containErr = append(containErr, err)
@@ -121,10 +127,6 @@ func Validate(v interface{}) error {
 				err.Field = tp.Field(i).Name
 				err.Err = errors.New("is not validated")
 				containErr = append(containErr, err)
-			}
-		case "Role":
-			if val.Field(i).Kind() != reflect.String {
-
 			}
 		}
 	}

@@ -46,10 +46,10 @@ func TestValidate(t *testing.T) {
 		{
 			User{
 				ID:     "1",
-				Name:   "AndrewOleshko",
+				Name:   "Andrew Sotnikov",
 				Age:    101,
 				Email:  "fff@fff.com",
-				Role:   "Director",
+				Role:   "",
 				Phones: sl,
 				meta:   nil,
 			},
