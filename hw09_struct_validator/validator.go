@@ -30,7 +30,7 @@ func (v ValidationErrors) Error() string {
 func Validate(v interface{}) error {
 	var err ValidationError
 	var containErr ValidationErrors
-	var ErrFieldType = errors.New("failed validation: Invalid field type")
+	var ErrFieldType = errors.New("invalid field type")
 
 	val := reflect.ValueOf(v)
 	tp := val.Type()
