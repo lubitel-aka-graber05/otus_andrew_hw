@@ -30,6 +30,8 @@ func (v ValidationErrors) Error() string {
 func Validate(v interface{}) error {
 	var err ValidationError
 	var containErr ValidationErrors
+	var ErrFieldType = errors.New("failed validation: Invalid field type")
+
 	val := reflect.ValueOf(v)
 	tp := val.Type()
 
@@ -43,32 +45,31 @@ func Validate(v interface{}) error {
 		tag := tp.Field(i).Tag.Get("validate")
 		body := val.Field(i)
 
-		switch tp.Field(i).Name {
-		case "":
+		if tp.Field(i).Tag == "" {
 			continue
+		}
+
+		switch tp.Field(i).Name {
 		case "ID":
 			var l int
 			_, _ = fmt.Sscanf(tag, "len:%d", &l)
-			if val.Field(i).Kind() != reflect.Int {
-				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
-			}
-			if body.Len() > l {
-				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
-				containErr = append(containErr, err)
-			}
-		case "Name":
 			if val.Field(i).Kind() != reflect.String {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = ErrFieldType
+				containErr = append(containErr, err)
+				continue
+			}
+			if body.Len() != l {
+				err.Field = tp.Field(i).Name
+				err.Err = errors.New("failed validation: Invalid length")
 				containErr = append(containErr, err)
 			}
 		case "Age":
 			if val.Field(i).Kind() != reflect.Int {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = ErrFieldType
 				containErr = append(containErr, err)
+				continue
 			}
 
 			var min, max int64
@@ -76,56 +77,60 @@ func Validate(v interface{}) error {
 
 			if body.Int() < min || body.Int() > max {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = errors.New("failed validation: Invalid age")
 				containErr = append(containErr, err)
 			}
 		case "Email":
 			if val.Field(i).Kind() != reflect.String {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = ErrFieldType
 				containErr = append(containErr, err)
+				continue
 			}
 			var mail = regexp.MustCompile(`(?m)^\w+@\w+\.\w+$`)
 			if !mail.MatchString(tag) {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = errors.New("failed validation: Invalid email format")
 				containErr = append(containErr, err)
 			}
 		case "Phones":
 			if val.Field(i).Kind() != reflect.Slice {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = ErrFieldType
 				containErr = append(containErr, err)
+				continue
 			}
 			var l int
 			if body.Len() != l {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = errors.New("failed validation: Invalid length")
 				containErr = append(containErr, err)
 			}
 		case "Version":
 			var l int
 			if val.Field(i).Kind() != reflect.String {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = ErrFieldType
 				containErr = append(containErr, err)
+				continue
 			}
 			if body.Len() != l {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = errors.New("failed validation: Invalid length")
 				containErr = append(containErr, err)
 			}
 		case "Code":
 			if val.Field(i).Kind() != reflect.Int {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = ErrFieldType
 				containErr = append(containErr, err)
+				continue
 			}
 			var a, b, c int64
 			_, _ = fmt.Sscanf(tag, "in:%d,%d,%d", &a, &b, &c)
 			if body.Int() != a || body.Int() != b || body.Int() != c {
 				err.Field = tp.Field(i).Name
-				err.Err = errors.New("is not validated")
+				err.Err = errors.New("failed validation: Invalid response")
 				containErr = append(containErr, err)
 			}
 		}
