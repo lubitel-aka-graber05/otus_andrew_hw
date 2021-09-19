@@ -37,15 +37,39 @@ type (
 )
 
 func TestValidate(t *testing.T) {
+	sl := []string{"77777777777", "88888888888"}
+	var err ValidationError
 	tests := []struct {
 		in          interface{}
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			User{
+				ID:     "1",
+				Name:   "Andrew Sotnikov",
+				Age:    101,
+				Email:  "fff@fff.com",
+				Role:   "",
+				Phones: sl,
+				meta:   nil,
+			},
+			err.Err,
 		},
-		// ...
-		// Place your code here.
+
+		{
+			App{
+				Version: "0.0.1a",
+			},
+			err.Err,
+		},
+
+		{
+			Response{
+				Code: 202,
+				Body: "",
+			},
+			err.Err,
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,7 +77,7 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
+			t.Log(tt.expectedErr)
 			_ = tt
 		})
 	}

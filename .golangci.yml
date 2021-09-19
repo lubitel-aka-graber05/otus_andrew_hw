@@ -30,15 +30,15 @@ linters:
     - durationcheck
     - errorlint
     - exportloopref
-    - funlen
+    #- funlen
     - gci
-    - gocognit
+    #- gocognit
     - goconst
     - gocritic
     - gocyclo
     - godot
     - gofmt
-    - gofumpt
+    #- gofumpt
     - goheader
     - goimports
     - golint
