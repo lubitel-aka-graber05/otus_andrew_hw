@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -22,17 +23,17 @@ type Telnet struct {
 	timeOut time.Duration
 	in      io.ReadCloser
 	out     io.Writer
-	ctx     context.Context
+	wg      sync.WaitGroup
 }
 
 func (t *Telnet) Connect() error {
 	dialer := &net.Dialer{}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), t.timeOut)
 	defer cancel()
 
 	conn, err := dialer.DialContext(ctx, "tcp", t.addr)
 	if err != nil {
-		return fmt.Errorf("Error from DialContext: %w\n", err)
+		return fmt.Errorf("Error from Connect.DialContext: %w\n", err)
 	}
 	defer conn.Close()
 
@@ -42,30 +43,66 @@ func (t *Telnet) Connect() error {
 func (t *Telnet) Send() error {
 	outCh := make(chan string)
 	outMessage := bufio.NewWriter(t.out)
+	ctx, cancel := context.WithTimeout(context.Background(), t.timeOut)
+	defer cancel()
+	t.wg.Add(1)
 	go func() {
-		buf := bufio.NewScanner(os.Stdin)
+		defer t.wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				buf := bufio.NewScanner(os.Stdin)
 
-		for buf.Scan() {
-			outCh <- buf.Text()
-		}
-		if buf.Err() != nil {
-			close(outCh)
+				for buf.Scan() {
+					outCh <- buf.Text()
+				}
+				if buf.Err() != nil {
+					close(outCh)
+				}
+			}
 		}
 	}()
+	t.wg.Wait()
 	for s := range outCh {
 		if _, err := outMessage.WriteString(s); err != nil {
-			return fmt.Errorf("Error from WriteString method: %w\n", err)
+			return fmt.Errorf("Error from Send.WriteString method: %w\n", err)
 		}
 	}
 	return nil
 }
 
 func (t *Telnet) Receive() error {
-	//inCh:=make(chan string)
+	inCh := make(chan string)
+	inMessage := bufio.NewWriter(os.Stdout)
+	ctx, cancel := context.WithTimeout(context.Background(), t.timeOut)
+	defer cancel()
+	t.wg.Add(1)
+	go func() {
+		defer t.wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				buf := bufio.NewScanner(t.in)
+				for buf.Scan() {
+					inCh <- buf.Text()
+				}
+				if buf.Err() != nil {
+					close(inCh)
+					break
+				}
+			}
+		}
 
-	buf := bufio.NewReader(t.in)
-	if _, err := buf.WriteTo(os.Stdout); err != nil {
-		return fmt.Errorf("Error from Recieve: %w\n", err)
+	}()
+	t.wg.Wait()
+	for s := range inCh {
+		if _, err := inMessage.WriteString(s); err != nil {
+			return fmt.Errorf("Error from Recive.WriteString method: %w\n", err)
+		}
 	}
 	return nil
 }
