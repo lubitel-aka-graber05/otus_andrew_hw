@@ -25,7 +25,6 @@ type Telnet struct {
 	conn    net.Conn
 	wg      sync.WaitGroup
 	closer  io.Closer
-	f       func() error
 }
 
 func (t *Telnet) Connect() error {
@@ -70,8 +69,12 @@ func (t *Telnet) Connect() error {
 	}()
 	t.wg.Wait()
 
-	if err = t.conn.Close(); err != nil {
+	/*if err = t.conn.Close(); err != nil {
 		return err
+	}*/
+	t.closer = t.conn
+	if t.Close() != nil {
+		return t.Close()
 	}
 
 	return nil
@@ -108,10 +111,10 @@ func (t *Telnet) Close() (err error) {
 	if t.closer == nil {
 		return nil
 	}
-	defer func() {
-		err = t.closer.Close()
-	}()
-	return t.f()
+
+	err = t.closer.Close()
+
+	return
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
