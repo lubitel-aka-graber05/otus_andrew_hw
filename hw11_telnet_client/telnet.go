@@ -3,11 +3,9 @@ package main
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"net"
-	"os"
 	"sync"
 	"time"
 )
@@ -19,74 +17,111 @@ type TelnetClient interface {
 	Receive() error
 }
 
-type Telnet struct{}
-
-func (t *Telnet) Connect() error {
-	connectTo()
+type Telnet struct {
+	address string
+	timeOut time.Duration
+	in      io.Reader
+	out     io.Writer
+	conn    net.Conn
+	wg      sync.WaitGroup
+	closer  io.Closer
+	f       func() error
 }
 
-func connectTo() (context.Context, net.Conn) {
-	dialer := &net.Dialer{}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func (t *Telnet) Connect() error {
+	dial := &net.Dialer{}
+	ctx, cancel := context.WithTimeout(context.Background(), t.timeOut)
 	defer cancel()
-	conn, err := dialer.DialContext(ctx, "tcp", "127.0.0.1:3302")
+	var err error
+	t.conn, err = dial.DialContext(ctx, "tcp", t.address)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	defer conn.Close()
-	return ctx, conn
+
+	t.wg.Add(1)
+	go func() {
+		defer t.wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				if err = t.Send(); err != nil {
+					log.Println(err)
+				}
+			}
+		}
+	}()
+
+	t.wg.Add(1)
+	go func() {
+		defer t.wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				if err = t.Receive(); err != nil {
+					log.Println(err)
+				}
+			}
+		}
+
+	}()
+	t.wg.Wait()
+
+	if err = t.conn.Close(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (t *Telnet) Send() error {
-	if err := writeMessage(connectTo()); err != nil {
-		return err
+	defer t.wg.Done()
+
+	message := bufio.NewScanner(t.in)
+	for message.Scan() {
+		if _, err := t.conn.Write(message.Bytes()); err != nil {
+			return err
+		}
+		if _, err := t.conn.Write([]byte("\n")); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
 func (t *Telnet) Receive() error {
-	if err := readMessage(connectTo()); err != nil {
-		return err
-	}
-	return nil
-}
+	defer t.wg.Done()
 
-func readMessage(ctx context.Context, conn net.Conn) error {
-	//buf:=bufio.NewScanner(conn)
-	messageToOut := bufio.NewWriter(os.Stdout)
 	for {
-		select {
-		case <-ctx.Done():
-			break
-		default:
-			if _, err := messageToOut.ReadFrom(conn); err != nil {
-				return err
-			}
+		writer := bufio.NewReader(t.conn)
+		if _, err := writer.WriteTo(t.out); err != nil {
+			return err
 		}
 	}
 }
 
-func writeMessage(ctx context.Context, conn net.Conn) error {
-	messageToIn := bufio.NewWriter(conn)
-	for {
-		select {
-		case <-ctx.Done():
-			break
-		default:
-			if _, err := messageToIn.ReadFrom(os.Stdin); err != nil {
-				return err
-			}
-		}
+func (t *Telnet) Close() (err error) {
+	if t.closer == nil {
+		return nil
 	}
-}
-
-func (t *Telnet) Close() error {
-	return nil
+	defer func() {
+		err = t.closer.Close()
+	}()
+	return t.f()
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
 	// Place your code here.
-	return &Telnet{}
+	return &Telnet{
+		address: address,
+		timeOut: timeout,
+		in:      in,
+		out:     out,
+	}
 }
 
 // Place your code here.
