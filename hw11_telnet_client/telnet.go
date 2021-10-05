@@ -45,7 +45,11 @@ func (t *Telnet) Connect() error {
 			case <-ctx.Done():
 				break
 			default:
-				if err = t.Send(); err != nil {
+				if err := t.Send(); err != nil {
+					log.Fatal(err)
+				}
+				t.closer = t.conn
+				if err := t.Close(); err != nil {
 					log.Println(err)
 				}
 			}
@@ -60,7 +64,11 @@ func (t *Telnet) Connect() error {
 			case <-ctx.Done():
 				break
 			default:
-				if err = t.Receive(); err != nil {
+				if err := t.Receive(); err != nil {
+					log.Println(err)
+				}
+				t.closer = t.conn
+				if err := t.Close(); err != nil {
 					log.Println(err)
 				}
 			}
@@ -69,12 +77,9 @@ func (t *Telnet) Connect() error {
 	}()
 	t.wg.Wait()
 
-	/*if err = t.conn.Close(); err != nil {
-		return err
-	}*/
 	t.closer = t.conn
-	if t.Close() != nil {
-		return t.Close()
+	if err = t.Close(); err != nil {
+		return err
 	}
 
 	return nil
