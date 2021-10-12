@@ -14,7 +14,9 @@ import (
 func main() {
 	var timeOutFlag time.Duration
 	flag.DurationVar(&timeOutFlag, "timeout", time.Second*10, "connection timeout")
+	flag.Parse()
 	args := flag.Args()
+	log.Println(len(args))
 	if len(args) != 2 {
 		log.Fatal("Enter a host and port number")
 	}
