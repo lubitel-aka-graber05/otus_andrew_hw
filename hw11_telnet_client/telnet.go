@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bufio"
-	"context"
+	"fmt"
 	"io"
-	"log"
 	"net"
-	"sync"
 	"time"
 )
 
@@ -23,107 +20,43 @@ type Telnet struct {
 	in      io.Reader
 	out     io.Writer
 	conn    net.Conn
-	wg      sync.WaitGroup
-	closer  io.Closer
 }
 
 func (t *Telnet) Connect() error {
-	dial := &net.Dialer{}
-	ctx, cancel := context.WithTimeout(context.Background(), t.timeOut)
-	defer cancel()
-	var err error
-	t.conn, err = dial.DialContext(ctx, "tcp", t.address)
+	conn, err := net.DialTimeout("tcp", t.address, t.timeOut)
 	if err != nil {
-		return err
+		return fmt.Errorf("connected: %w", err)
 	}
-
-	t.wg.Add(1)
-	go func() {
-		defer t.wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				if err := t.Send(); err != nil {
-					log.Fatal(err)
-				}
-				t.closer = t.conn
-				if err := t.Close(); err != nil {
-					log.Println(err)
-				}
-			}
-		}
-	}()
-
-	t.wg.Add(1)
-	go func() {
-		defer t.wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				if err := t.Receive(); err != nil {
-					log.Println(err)
-				}
-				t.closer = t.conn
-				if err := t.Close(); err != nil {
-					log.Println(err)
-				}
-			}
-		}
-
-	}()
-	t.wg.Wait()
-
-	t.closer = t.conn
-	if err = t.Close(); err != nil {
-		return err
-	}
-
+	t.conn = conn
 	return nil
 }
 
 func (t *Telnet) Send() error {
-	defer t.wg.Done()
-
-	message := bufio.NewScanner(t.in)
-	for message.Scan() {
-		if _, err := t.conn.Write(message.Bytes()); err != nil {
-			return err
-		}
-		if _, err := t.conn.Write([]byte("\n")); err != nil {
-			return err
-		}
+	if _, err := io.Copy(t.conn, t.in); err != nil {
+		return fmt.Errorf("send: %w", err)
 	}
 
 	return nil
 }
 
 func (t *Telnet) Receive() error {
-	defer t.wg.Done()
-
-	for {
-		writer := bufio.NewReader(t.conn)
-		if _, err := writer.WriteTo(t.out); err != nil {
-			return err
-		}
+	if _, err := io.Copy(t.out, t.conn); err != nil {
+		return fmt.Errorf("receive: %w", err)
 	}
+
+	return nil
 }
 
 func (t *Telnet) Close() (err error) {
-	if t.closer == nil {
-		return nil
+	if t.conn != nil {
+		if err = t.conn.Close(); err != nil {
+			return fmt.Errorf("close: %w", err)
+		}
 	}
-
-	err = t.closer.Close()
-
-	return
+	return nil
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
-	// Place your code here.
 	return &Telnet{
 		address: address,
 		timeOut: timeout,

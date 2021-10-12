@@ -1,29 +1,44 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
-var (
-	timeOutFlag time.Duration
-)
-
-func init() {
-	flag.DurationVar(&timeOutFlag, "timeout", time.Second*10, "connection timeout")
-}
-
 func main() {
-	flag.Parse()
+	var timeOutFlag time.Duration
+	flag.DurationVar(&timeOutFlag, "timeout", time.Second*10, "connection timeout")
 	args := flag.Args()
 	if len(args) != 2 {
 		log.Fatal("Enter a host and port number")
 	}
-	address := args[0] + ":" + args[1]
-	telnet := NewTelnetClient(address, timeOutFlag, os.Stdin, os.Stdout)
+
+	telnet := NewTelnetClient(net.JoinHostPort(args[0], args[1]), timeOutFlag, os.Stdin, os.Stdout)
 	if err := telnet.Connect(); err != nil {
 		log.Fatal(err)
 	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	go func() {
+		if err := telnet.Send(); err != nil {
+			log.Fatal(err)
+		}
+		log.Println("connection closed")
+		cancel()
+	}()
+	go func() {
+		if err := telnet.Receive(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	<-ctx.Done()
 }
