@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type User struct {
@@ -15,7 +15,6 @@ type User struct {
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-
 	return countDomains(r, domain)
 }
 
